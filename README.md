@@ -30,7 +30,6 @@ Sudoku
 
 Backtracking Algorithm
 
-
 function solve( board )
     if the board contains no invalid cells, ie.cells that violate the rules:
         if it is also completely filled out then
