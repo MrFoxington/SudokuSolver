@@ -1,6 +1,7 @@
 import copy
 import sudoku
 import boards
+import math
 
 
 # TODO: Move all guesses logic into Sudoku class.....
@@ -33,7 +34,7 @@ class Solver:
     # DAYYYMM! That's one sexy function. Best refactor ever!
     # TODO: Determinf if this should become a static method
     def get_cell_guesses(self, puzzle, row, col):
-        guesses = range(1, 10)
+        guesses = list(range(1, 10))
         guesses = [x for x in guesses if x not in puzzle.get_row(row)]
         guesses = [x for x in guesses if x not in puzzle.get_col(col)]
         guesses = [x for x in guesses if x not in puzzle.get_box(row, col)]
@@ -41,9 +42,23 @@ class Solver:
 
     # Oh god, send help!. This is turning into a clusterfuck...
     def update_guesses_by_cell(self, guesses, puzzle, row, col):
-         # Get all other cells affected by updated Cell
-         # Itterate through cells and remove value from guesses from
-        pass
+        val = puzzle.board[row][col]
+        for i, cell in enumerate(guesses[row]):
+            guesses[row][i] = [x for x in cell if x != val]
+
+        for i, cell in enumerate([row[col] for row in guesses]):
+            guesses[i][col] = [x for x in cell if x != val]
+
+        box_row = math.ceil((row + 1) / 3)
+        box_col = math.ceil((col + 1) / 3)
+        for r in range(3):
+            for c in range(3):
+                # row offset, col offset
+                rx = (box_row - 1) * 3
+                cx = (box_col - 1) * 3
+                cell = guesses[r + rx][c + cx]
+                guesses[r + rx][c + cx] = [x for x in cell if x != val]
+        return guesses
 
     # TODO: Learn Backtracking algorithm
     def solve(self):
@@ -51,14 +66,19 @@ class Solver:
         for row in self.puzzle.board:
             empty += row.count(0)
 
-        self.__solve_dumb(self.puzzle, empty)
+        #self.__solve_dumb(self.puzzle, empty)
+        if self.__solve(self.puzzle, self.guesses, empty):
+            print("I SOLVED IT!!!!")
+        else:
+            print('Awwwww no solution found!')
 
     # Smart Recursive Solver (locates lowest guess count)
     def __solve(self, puzzle, guesses, empty):
-        print('Solving!')
+        print('Empty Spaces = ', empty)
         if empty <= 0:
             if puzzle.validate_board():
                 print(puzzle)
+                puzzle.print()
                 return True
             return False
 
@@ -77,16 +97,17 @@ class Solver:
                 guesses = tmp_guesses
                 return True
             else:
+                print("Failed Path!")
                 tmp_puzzle.board[row][col] = 0
         return False
 
     # Find cell with least options (Guess count)
     def __find_best_cell_row_col(self, guesses):
         # [Guess Count, row, col)
-        best_cell = None
+        best_cell = [9, 0, 0]
         for x, row in enumerate(guesses):
             for y, cell in enumerate(row):
-                if len(cell) > 0:
+                if type(cell) is not None and len(cell) > 0:
                     if best_cell is None: best_cell = [len(cell), x, y]
                     if len(cell) < best_cell[0]: best_cell = [len(cell), x, y]
                     if len(cell) == 1: return x, y
@@ -118,6 +139,6 @@ class Solver:
 
 
 s = Solver()
-s.load_puzzle(boards.board_easy)
+s.load_puzzle(boards.board_hard)
 s.solve()
 print("Done Run!")
