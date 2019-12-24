@@ -66,15 +66,15 @@ class Solver:
         for row in self.puzzle.board:
             empty += row.count(0)
 
-        #self.__solve_dumb(self.puzzle, empty)
+        print(empty)
+        # self.__solve_dumb(self.puzzle, empty)
         if self.__solve(self.puzzle, self.guesses, empty):
             print("I SOLVED IT!!!!")
         else:
             print('Awwwww no solution found!')
 
     # Smart Recursive Solver (locates lowest guess count)
-    def __solve(self, puzzle, guesses, empty):
-        print('Empty Spaces = ', empty)
+    def __solve(self, puzzle, guesses, empty, depth=0):
         if empty <= 0:
             if puzzle.validate_board():
                 print(puzzle)
@@ -90,14 +90,16 @@ class Solver:
             tmp_puzzle.board[row][col] = val
             # DISGUSTING! Hate having to copy guesses every loop...
             # Data is lost when updating guesses -> Need to re-copy original guesses each try
-            tmp_guesses = copy.deepcopy(self.update_guesses_by_cell(guesses, tmp_puzzle, row, col))
+            tmp_guesses = copy.deepcopy(guesses)
+            self.update_guesses_by_cell(tmp_guesses, tmp_puzzle, row, col)
             tmp_guesses[row][col] = []
-            if self.__solve(tmp_puzzle, tmp_guesses, empty - 1):
+            print('.' * depth + "Depth: {} - {},{} - Val: {}, {}".format(depth, row, col, val, possibilities))
+            if self.__solve(tmp_puzzle, tmp_guesses, empty - 1, depth + 1):
                 puzzle = tmp_puzzle
                 guesses = tmp_guesses
                 return True
             else:
-                print("Failed Path!")
+                print('.' * depth + "Failed Path!")
                 tmp_puzzle.board[row][col] = 0
         return False
 
@@ -139,6 +141,6 @@ class Solver:
 
 
 s = Solver()
-s.load_puzzle(boards.board_hard)
+s.load_puzzle(boards.board_evil2)
 s.solve()
 print("Done Run!")
