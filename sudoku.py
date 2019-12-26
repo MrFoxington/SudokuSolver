@@ -42,15 +42,6 @@ class Sudoku:
         else:
             return False
 
-    def __validate(self, list):
-        found = []
-        for cell in list:
-            if cell in found:
-                return False
-            elif cell != 0:
-                found.append(cell)
-        return True
-
     # Iterate over every cell in Row to locate duplicates
     def validate_row(self, row):
         return self.__validate(self.get_row(row))
@@ -83,7 +74,18 @@ class Sudoku:
                 box.append(cell)
         return box
 
-    def extract_board_string(self, board):
+    @staticmethod
+    def __validate(list):
+        found = []
+        for cell in list:
+            if cell in found:
+                return False
+            elif cell != 0:
+                found.append(cell)
+        return True
+
+    @staticmethod
+    def extract_board_string(board):
         s = ''
         for seq in board:
             for c in seq:
