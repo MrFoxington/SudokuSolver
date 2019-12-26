@@ -1,11 +1,7 @@
 import copy
+import timeit
 import sudoku
-import boards
 import math
-
-
-# TODO: Move all guesses logic into Sudoku class.....
-# This is dumb the amount of janky solutions so similar to the puzzle board logic
 
 
 class Solver:
@@ -31,17 +27,18 @@ class Solver:
                 if self.puzzle.board[x][y] == 0:
                     self.guesses[x][y] = self.get_cell_guesses(self.puzzle, x, y)
 
-    # DAYYYMM! That's one sexy function. Best refactor ever!
-    # TODO: Determinf if this should become a static method
-    def get_cell_guesses(self, puzzle, row, col):
+    # TODO: Determine if this should become a static method
+    @staticmethod
+    def get_cell_guesses(puzzle, row, col):
         guesses = list(range(1, 10))
         guesses = [x for x in guesses if x not in puzzle.get_row(row)]
         guesses = [x for x in guesses if x not in puzzle.get_col(col)]
         guesses = [x for x in guesses if x not in puzzle.get_box(row, col)]
         return guesses
 
-    # Oh god, send help!. This is turning into a clusterfuck...
-    def update_guesses_by_cell(self, guesses, puzzle, row, col):
+    # TODO: Refactor update_gueses_by_cell to not reuse code from sudoku class
+    @staticmethod
+    def update_guesses_by_cell(guesses, puzzle, row, col):
         val = puzzle.board[row][col]
         for i, cell in enumerate(guesses[row]):
             guesses[row][i] = [x for x in cell if x != val]
@@ -60,24 +57,25 @@ class Solver:
                 guesses[r + rx][c + cx] = [x for x in cell if x != val]
         return guesses
 
-    # TODO: Learn Backtracking algorithm
     def solve(self):
         empty = 0
         for row in self.puzzle.board:
             empty += row.count(0)
 
-        print(empty)
-        # self.__solve_dumb(self.puzzle, empty)
+        start = timeit.default_timer()
+        print('Empty spaces to calculate: ', empty)
         if self.__solve(self.puzzle, self.guesses, empty):
             print("I SOLVED IT!!!!")
+            stop = timeit.default_timer()
+            print('Time: ', stop-start)
         else:
             print('Awwwww no solution found!')
 
+    # TODO: Refactor __solve alrorithm to be cleaner and more concise
     # Smart Recursive Solver (locates lowest guess count)
     def __solve(self, puzzle, guesses, empty, depth=0):
         if empty <= 0:
             if puzzle.validate_board():
-                print(puzzle)
                 puzzle.print()
                 return True
             return False
@@ -103,8 +101,8 @@ class Solver:
                 tmp_puzzle.board[row][col] = 0
         return False
 
-    # Find cell with least options (Guess count)
-    def __find_best_cell_row_col(self, guesses):
+    @staticmethod
+    def __find_best_cell_row_col(guesses):
         # [Guess Count, row, col)
         best_cell = [9, 0, 0]
         for x, row in enumerate(guesses):
@@ -114,33 +112,3 @@ class Solver:
                     if len(cell) < best_cell[0]: best_cell = [len(cell), x, y]
                     if len(cell) == 1: return x, y
         return best_cell[1], best_cell[2]
-
-    # Dumb Recursive Solver
-    # Unable to tell if valid, CBF letting it run for long enough to see if it finds a valid solution
-    def __solve_dumb(self, puzzle, empty):
-        print('Solving!')
-        if empty <= 0:
-            if puzzle.validate_board():
-                print(puzzle)
-                return True
-            return False
-
-        for x, row in enumerate(puzzle.board):
-            for y, cell in enumerate(row):
-                if cell == 0:
-                    guesses = self.get_cell_guesses(puzzle, x, y)
-                    puz = copy.deepcopy(puzzle)  # Puzzle and Puz are still pointing to the same object,
-                    for val in guesses:
-                        puz.board[x][y] = val
-                        if self.__solve_dumb(puz, empty - 1):
-                            puzzle = puz
-                            return True
-                        else:
-                            puz.board[x][y] = 0
-        return False
-
-
-s = Solver()
-s.load_puzzle(boards.board_evil2)
-s.solve()
-print("Done Run!")
